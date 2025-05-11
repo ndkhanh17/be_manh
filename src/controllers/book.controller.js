@@ -3,38 +3,12 @@ const BookService = require("../services/book.service")
 const BookController = {
   async getAllBooks(req, res, next) {
     try {
-      const { page = 1, limit = 10, category, search, sort } = req.query
-
-      const query = {}
-      const options = {
-        skip: (Number.parseInt(page) - 1) * Number.parseInt(limit),
-        limit: Number.parseInt(limit),
-      }
-
-      // Add category filter if provided
-      if (category) {
-        query.category = category
-      }
-
-      // Add sorting if provided
-      if (sort) {
-        const [field, order] = sort.split(":")
-        options.sort = { [field]: order === "desc" ? -1 : 1 }
-      }
-
-      let books
-
-      // If search term is provided, use search method
-      if (search) {
-        books = await BookService.searchBooks(search, options)
-      } else {
-        books = await BookService.getAllBooks(query, options)
-      }
+      const result = await BookService.getAllBooks(req.query)
 
       res.status(200).json({
         success: true,
-        count: books.length,
-        data: books,
+        message: "Books retrieved successfully",
+        data: result,
       })
     } catch (error) {
       next(error)
@@ -43,11 +17,11 @@ const BookController = {
 
   async getBookById(req, res, next) {
     try {
-      const { id } = req.params
-      const book = await BookService.getBookById(id)
+      const book = await BookService.getBookById(req.params.id)
 
       res.status(200).json({
         success: true,
+        message: "Book retrieved successfully",
         data: book,
       })
     } catch (error) {
@@ -57,8 +31,7 @@ const BookController = {
 
   async createBook(req, res, next) {
     try {
-      const bookData = req.body
-      const book = await BookService.createBook(bookData)
+      const book = await BookService.createBook(req.body)
 
       res.status(201).json({
         success: true,
@@ -72,9 +45,7 @@ const BookController = {
 
   async updateBook(req, res, next) {
     try {
-      const { id } = req.params
-      const updateData = req.body
-      const book = await BookService.updateBook(id, updateData)
+      const book = await BookService.updateBook(req.params.id, req.body)
 
       res.status(200).json({
         success: true,
@@ -88,8 +59,7 @@ const BookController = {
 
   async deleteBook(req, res, next) {
     try {
-      const { id } = req.params
-      await BookService.deleteBook(id)
+      await BookService.deleteBook(req.params.id)
 
       res.status(200).json({
         success: true,
@@ -100,36 +70,13 @@ const BookController = {
     }
   },
 
-  async getBooksByCategory(req, res, next) {
+  async getBestsellers(req, res, next) {
     try {
-      const { category } = req.params
-      const { page = 1, limit = 10 } = req.query
-
-      const options = {
-        skip: (Number.parseInt(page) - 1) * Number.parseInt(limit),
-        limit: Number.parseInt(limit),
-      }
-
-      const books = await BookService.getBooksByCategory(category, options)
+      const books = await BookService.getBestsellers(req.query.limit)
 
       res.status(200).json({
         success: true,
-        count: books.length,
-        data: books,
-      })
-    } catch (error) {
-      next(error)
-    }
-  },
-
-  async getBestSellers(req, res, next) {
-    try {
-      const { limit = 5 } = req.query
-      const books = await BookService.getBestSellers(Number.parseInt(limit))
-
-      res.status(200).json({
-        success: true,
-        count: books.length,
+        message: "Bestsellers retrieved successfully",
         data: books,
       })
     } catch (error) {
@@ -139,15 +86,39 @@ const BookController = {
 
   async getNewArrivals(req, res, next) {
     try {
-      const { limit = 5 } = req.query
-      const books = await BookService.getNewArrivals(Number.parseInt(limit))
+      const books = await BookService.getNewArrivals(req.query.limit)
 
       res.status(200).json({
         success: true,
-        count: books.length,
+        message: "New arrivals retrieved successfully",
         data: books,
       })
     } catch (error) {
+      next(error)
+    }
+  },
+
+  async searchBooks(req, res, next) {
+    try {
+      const searchParams = {
+        name: req.query.name,
+        category: req.query.category,
+        minPrice: req.query.minPrice,
+        maxPrice: req.query.maxPrice,
+        page: req.query.page,
+        limit: req.query.limit,
+        sort: req.query.sort,
+      }
+
+      const result = await BookService.searchBooks(searchParams)
+
+      res.status(200).json({
+        success: true,
+        message: "Tìm kiếm sách thành công",
+        data: result,
+      })
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm sách:", error)
       next(error)
     }
   },

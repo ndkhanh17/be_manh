@@ -5,22 +5,13 @@ const authMiddleware = require("../middlewares/auth.middleware")
 const validate = require("../middlewares/validator.middleware")
 const bookValidation = require("../validations/book.validation")
 
-// Get all books (public)
+// Public routes
 router.get("/", BookController.getAllBooks)
-
-// Get book by ID (public)
+router.get("/bestsellers", BookController.getBestsellers)
+router.get("/new-arrivals", BookController.getNewArrivals)
 router.get("/:id", BookController.getBookById)
 
-// Get books by category (public)
-router.get("/category/:category", BookController.getBooksByCategory)
-
-// Get best sellers (public)
-router.get("/bestsellers/list", BookController.getBestSellers)
-
-// Get new arrivals (public)
-router.get("/new/arrivals", BookController.getNewArrivals)
-
-// Create a new book (admin only)
+// Protected routes (admin only)
 router.post(
   "/",
   authMiddleware.authenticate,
@@ -29,7 +20,6 @@ router.post(
   BookController.createBook,
 )
 
-// Update a book (admin only)
 router.put(
   "/:id",
   authMiddleware.authenticate,
@@ -38,7 +28,9 @@ router.put(
   BookController.updateBook,
 )
 
-// Delete a book (admin only)
 router.delete("/:id", authMiddleware.authenticate, authMiddleware.authorize("admin"), BookController.deleteBook)
+
+// Thêm route tìm kiếm nâng cao
+router.get("/search", BookController.searchBooks)
 
 module.exports = router
