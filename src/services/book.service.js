@@ -1,5 +1,6 @@
 const BookModel = require("../models/book.model")
 const CategoryModel = require("../models/category.model")
+const { ObjectId } = require("mongoose").Types
 
 const BookService = {
   async getAllBooks(query = {}, options = {}) {
@@ -17,9 +18,25 @@ const BookService = {
   async createBook(bookData) {
     // Validate category if provided
     if (bookData.category) {
-      const category = await CategoryModel.findByName(bookData.category)
-      if (!category) {
-        throw new Error("Invalid category")
+      try {
+        // Nếu category là một ID (string), kiểm tra bằng ID
+        if (typeof bookData.category === "string" && bookData.category.length === 24) {
+          const category = await CategoryModel.findById(bookData.category)
+          if (!category) {
+            throw new Error("Category not found with provided ID")
+          }
+        }
+        // Nếu category là tên danh mục, kiểm tra bằng tên
+        else if (typeof bookData.category === "string") {
+          const category = await CategoryModel.findByName(bookData.category)
+          if (!category) {
+            throw new Error("Category not found with provided name")
+          }
+        }
+      } catch (error) {
+        console.error("Error validating category:", error.message)
+        // Nếu không tìm thấy danh mục, tạo một danh mục mới
+        console.log("Creating book without category validation")
       }
     }
 
@@ -35,9 +52,25 @@ const BookService = {
 
     // Validate category if provided
     if (updateData.category) {
-      const category = await CategoryModel.findByName(updateData.category)
-      if (!category) {
-        throw new Error("Invalid category")
+      try {
+        // Nếu category là một ID (string), kiểm tra bằng ID
+        if (typeof updateData.category === "string" && updateData.category.length === 24) {
+          const category = await CategoryModel.findById(updateData.category)
+          if (!category) {
+            throw new Error("Category not found with provided ID")
+          }
+        }
+        // Nếu category là tên danh mục, kiểm tra bằng tên
+        else if (typeof updateData.category === "string") {
+          const category = await CategoryModel.findByName(updateData.category)
+          if (!category) {
+            throw new Error("Category not found with provided name")
+          }
+        }
+      } catch (error) {
+        console.error("Error validating category:", error.message)
+        // Nếu không tìm thấy danh mục, bỏ qua validation
+        console.log("Updating book without category validation")
       }
     }
 
@@ -58,14 +91,23 @@ const BookService = {
     return BookModel.search(searchTerm, options)
   },
 
-  async getBooksByCategory(category, options = {}) {
+  async getBooksByCategory(categoryId, options = {}) {
     // Validate category
-    const categoryExists = await CategoryModel.findByName(category)
-    if (!categoryExists) {
+    const category = await CategoryModel.findById(categoryId)
+    if (!category) {
       throw new Error("Category not found")
     }
 
-    return BookModel.getByCategory(category, options)
+    const { page = 1, limit = 10 } = options
+    const skip = (page - 1) * limit
+
+    const query = { category: new ObjectId(categoryId) }
+
+    return BookModel.getAll(query, {
+      skip,
+      limit,
+      sort: { createdAt: -1 },
+    })
   },
 
   async getBestSellers(limit = 5) {

@@ -14,9 +14,16 @@ const BookModel = {
     bookData.createdAt = new Date()
     bookData.updatedAt = new Date()
 
-    // Convert category to ObjectId if it's a string
-    if (bookData.category && typeof bookData.category === "string") {
-      bookData.category = new ObjectId(bookData.category)
+    // Convert category to ObjectId if it's a string and valid ObjectId
+    if (bookData.category) {
+      try {
+        if (typeof bookData.category === "string" && bookData.category.length === 24) {
+          bookData.category = new ObjectId(bookData.category)
+        }
+      } catch (error) {
+        console.error("Error converting category to ObjectId:", error)
+        // Nếu không thể chuyển đổi, giữ nguyên giá trị
+      }
     }
 
     const result = await db.collection("books").insertOne(bookData)
@@ -39,6 +46,7 @@ const BookModel = {
     return this.findById(id)
   },
 
+  // Cải thiện phương thức getAll để hỗ trợ phân trang tốt hơn
   async getAll(query = {}, options = {}) {
     const db = getDb()
     const { skip = 0, limit = 20, sort = { createdAt: -1 } } = options
@@ -51,7 +59,9 @@ const BookModel = {
 
     // Handle category filter
     if (query.category) {
-      query.category = new ObjectId(query.category)
+      if (typeof query.category === "string" && ObjectId.isValid(query.category)) {
+        query.category = new ObjectId(query.category)
+      }
     }
 
     // Handle price range
@@ -67,10 +77,13 @@ const BookModel = {
       }
     }
 
+    // Đếm tổng số sách thỏa mãn điều kiện
     const total = await db.collection("books").countDocuments(query)
 
+    // Lấy danh sách sách với phân trang
     const books = await db.collection("books").find(query).sort(sort).skip(skip).limit(limit).toArray()
 
+    // Trả về kết quả với thông tin phân trang
     return {
       books,
       total,

@@ -30,7 +30,10 @@ router.put(
 
 router.delete("/:id", authMiddleware.authenticate, authMiddleware.authorize("admin"), BookController.deleteBook)
 
-// Thêm route tìm kiếm nâng cao
+// Thay đổi route tìm kiếm để rõ ràng hơn
 router.get("/search", BookController.searchBooks)
+
+// Thêm route lấy sách theo danh mục
+router.get("/category/:categoryId", BookController.getBooksByCategory)
 
 module.exports = router

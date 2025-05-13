@@ -141,6 +141,32 @@ const OrderController = {
       next(error)
     }
   },
+
+  // Thêm phương thức để lấy lịch sử đơn hàng chi tiết
+  async getOrderHistory(req, res, next) {
+    try {
+      const { page = 1, limit = 10, status, startDate, endDate, sort = "desc" } = req.query
+
+      const options = {
+        page: Number.parseInt(page),
+        limit: Number.parseInt(limit),
+        sort: sort === "asc" ? { createdAt: 1 } : { createdAt: -1 },
+        status,
+        startDate,
+        endDate,
+      }
+
+      const orders = await OrderService.getOrderHistory(req.user.id, options)
+
+      res.status(200).json({
+        success: true,
+        message: "Order history retrieved successfully",
+        data: orders,
+      })
+    } catch (error) {
+      next(error)
+    }
+  },
 }
 
 module.exports = OrderController

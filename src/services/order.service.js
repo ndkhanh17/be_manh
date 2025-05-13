@@ -1,6 +1,7 @@
 const OrderModel = require("../models/order.model")
 const BookModel = require("../models/book.model")
 const UserModel = require("../models/user.model")
+const { getDb } = require("../config/database")
 
 const OrderService = {
   async createOrder(orderData) {
@@ -82,6 +83,55 @@ const OrderService = {
 
   async getRecentOrders(limit = 5) {
     return OrderModel.getRecentOrders(limit)
+  },
+
+  // Thêm phương thức lấy lịch sử đơn hàng chi tiết
+  async getOrderHistory(userId, options = {}) {
+    // Validate user
+    const user = await UserModel.findById(userId)
+    if (!user) {
+      throw new Error("User not found")
+    }
+
+    const { page = 1, limit = 10, sort = { createdAt: -1 }, status, startDate, endDate } = options
+    const skip = (page - 1) * limit
+
+    // Xây dựng query
+    const query = { "customerInfo.userId": userId }
+
+    // Lọc theo trạng thái nếu có
+    if (status) {
+      query.status = status
+    }
+
+    // Lọc theo khoảng thời gian
+    if (startDate || endDate) {
+      query.createdAt = {}
+
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate)
+      }
+
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate)
+      }
+    }
+
+    const db = getDb()
+
+    // Đếm tổng số đơn hàng
+    const total = await db.collection("orders").countDocuments(query)
+
+    // Lấy danh sách đơn hàng
+    const orders = await db.collection("orders").find(query).sort(sort).skip(skip).limit(limit).toArray()
+
+    return {
+      orders,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
   },
 }
 

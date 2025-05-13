@@ -122,6 +122,27 @@ const BookController = {
       next(error)
     }
   },
+
+  // Thêm phương thức getBooksByCategory
+  async getBooksByCategory(req, res, next) {
+    try {
+      const { categoryId } = req.params
+      const { page = 1, limit = 10 } = req.query
+
+      const result = await BookService.getBooksByCategory(categoryId, {
+        page: Number.parseInt(page),
+        limit: Number.parseInt(limit),
+      })
+
+      res.status(200).json({
+        success: true,
+        message: "Books by category retrieved successfully",
+        data: result,
+      })
+    } catch (error) {
+      next(error)
+    }
+  },
 }
 
 module.exports = BookController

@@ -50,8 +50,23 @@ const AuthService = {
   },
 
   generateToken(user) {
-    return jwt.sign({ id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
+    // Đảm bảo rằng chúng ta đang bao gồm role trong payload
+    const payload = {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role || "customer", // Đảm bảo role luôn có giá trị
+    }
+
+    console.log("Token payload:", payload)
+
+    // Đảm bảo JWT_SECRET tồn tại
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined in environment variables!")
+      throw new Error("Server configuration error")
+    }
+
+    return jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || "30d",
     })
   },
 

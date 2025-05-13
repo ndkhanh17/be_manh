@@ -42,4 +42,7 @@ router.get(
   OrderController.getRecentOrders,
 )
 
+// Thêm route lấy lịch sử đơn hàng chi tiết
+router.get("/history", authMiddleware.authenticate, OrderController.getOrderHistory)
+
 module.exports = router
